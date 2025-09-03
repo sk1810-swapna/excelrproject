@@ -1,5 +1,12 @@
-import sklearn
-print("✅ scikit-learn version:", sklearn.__version__)
+import subprocess
+import sys
+
+try:
+    import sklearn
+except ModuleNotFoundError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "scikit-learn"])
+    import sklearn
+
 
 import streamlit as st
 import pandas as pd
