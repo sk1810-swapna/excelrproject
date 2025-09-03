@@ -1,12 +1,18 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import StandardScaler
-from imblearn.over_sampling import SMOTE
+
+# Defensive imports for deployment clarity
+try:
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.svm import SVC
+    from sklearn.tree import DecisionTreeClassifier
+    from sklearn.neighbors import KNeighborsClassifier
+    from sklearn.preprocessing import StandardScaler
+    from imblearn.over_sampling import SMOTE
+except ModuleNotFoundError as e:
+    st.error(f"❌ Missing package: {e.name}. Please check your requirements.txt.")
+    st.stop()
 
 # --- Page Config ---
 st.set_page_config(page_title="📞 Telecom Churn Predictor", layout="centered")
@@ -30,11 +36,12 @@ raw_inputs = {
 
 # --- Load and Preprocess Dataset ---
 try:
-    df = pd.read_csv("telecommunications_churn (1).csv")
+    df = pd.read_csv("telecommunications_churn.csv")
 except FileNotFoundError:
-    st.error("❌ Dataset 'telecommunications_churn (1).csv' not found.")
+    st.error("❌ Dataset 'telecommunications_churn.csv' not found. Please upload it to the same folder as app.py.")
     st.stop()
 
+# Drop unused or problematic columns
 df.drop(columns=['international_plan', 'voice_mail_plan'], errors='ignore', inplace=True)
 df.dropna(inplace=True)
 df = df[df['churn'].isin([0, 1])]
@@ -42,9 +49,11 @@ df = df[df['churn'].isin([0, 1])]
 X = df.drop(columns=['churn'])
 y = df['churn']
 
+# Handle imbalance
 smote = SMOTE(random_state=42)
 X_resampled, y_resampled = smote.fit_resample(X, y)
 
+# Scale features
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X_resampled)
 
@@ -86,7 +95,7 @@ input_scaled = scaler.transform(input_df)
 # --- Predict ---
 if st.button("🔍 Predict Churn"):
     prediction = model.predict(input_scaled)[0]
-    prediction_proba = model.predict_proba(input_scaled)[0][prediction]
+    prediction_proba = model.predict_proba(input_scaled)[0][prediction] if hasattr(model, "predict_proba") else None
 
     st.subheader("🔢 Churn Prediction")
     st.code(f"{prediction}", language="text")
@@ -94,5 +103,6 @@ if st.button("🔍 Predict Churn"):
     amsg = "Customer is likely to churn." if prediction == 1 else "Customer is likely to stay."
     st.write(f"🗨️ {amsg}")
 
-    with st.expander("Show Prediction Confidence"):
-        st.write(f"Confidence: {prediction_proba:.2f}")
+    if prediction_proba is not None:
+        with st.expander("Show Prediction Confidence"):
+            st.write(f"Confidence: {prediction_proba:.2f}")
