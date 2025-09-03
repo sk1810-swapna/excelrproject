@@ -1,28 +1,14 @@
-import subprocess
-import sys
-
-try:
-    import sklearn
-except ModuleNotFoundError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "scikit-learn"])
-    import sklearn
-
-
 import streamlit as st
 import pandas as pd
 import numpy as np
 
-# Defensive imports for deployment clarity
-try:
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.svm import SVC
-    from sklearn.tree import DecisionTreeClassifier
-    from sklearn.neighbors import KNeighborsClassifier
-    from sklearn.preprocessing import StandardScaler
-    from imblearn.over_sampling import SMOTE
-except ModuleNotFoundError as e:
-    st.error(f"❌ Missing package: {e.name}. Please check your requirements.txt.")
-    st.stop()
+# --- Model Imports ---
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import SMOTE
 
 # --- Page Config ---
 st.set_page_config(page_title="📞 Telecom Churn Predictor", layout="centered")
@@ -51,7 +37,6 @@ except FileNotFoundError:
     st.error("❌ Dataset 'telecommunications_churn.csv' not found. Please upload it to the same folder as app.py.")
     st.stop()
 
-# Drop unused or problematic columns
 df.drop(columns=['international_plan', 'voice_mail_plan'], errors='ignore', inplace=True)
 df.dropna(inplace=True)
 df = df[df['churn'].isin([0, 1])]
@@ -116,3 +101,4 @@ if st.button("🔍 Predict Churn"):
     if prediction_proba is not None:
         with st.expander("Show Prediction Confidence"):
             st.write(f"Confidence: {prediction_proba:.2f}")
+
